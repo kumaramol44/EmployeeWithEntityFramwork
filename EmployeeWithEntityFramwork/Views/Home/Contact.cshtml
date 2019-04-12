@@ -1,0 +1,59 @@
+﻿@{
+    ViewBag.Title = "Contact";
+}
+@*<h2>@ViewBag.Title.</h2>*@
+
+
+<address>
+    One Microsoft Way<br />
+    Redmond, WA 98052-6399<br />
+    <abbr title="Phone">P:</abbr>
+    425.555.0100
+</address>
+
+@model EmployeeWithEntityFramwork.Models.Contact
+
+@if (ViewBag.Message == null)
+{
+
+    using (Html.BeginForm("Contact", "Home", FormMethod.Post))
+    {
+        <div class="row">
+
+            <fieldset>
+                @Html.AntiForgeryToken()
+
+                <div class="editor-label">
+                    @Html.LabelFor(model => model.Name)
+                </div>
+                <div class="editor-field">
+                    @Html.EditorFor(model => model.Name)
+                    @Html.ValidationMessageFor(model => model.Name)
+                </div>
+                <div class="editor-label">
+                    @Html.LabelFor(model => model.EmailAddress)
+                </div>
+                <div class="editor-field">
+                    @Html.EditorFor(model => model.EmailAddress)
+                    @Html.ValidationMessageFor(model => model.EmailAddress)
+                </div>
+                <div class="editor-label">
+                    @Html.LabelFor(model => model.Message)
+                </div>
+                <div class="editor-field">
+                    @Html.TextAreaFor(model => model.Message)
+                    @Html.ValidationMessageFor(model => model.Message)
+                </div>
+
+                <div style="display: -webkit-inline-box;margin-top: 10px;">
+                    <p>
+                        <input type="submit" value="Send Message" id="btn_contactus" />
+                    </p>
+                </div>
+            </fieldset>
+        </div>
+    }
+}
+
+
+<h3>@ViewBag.Message</h3>
