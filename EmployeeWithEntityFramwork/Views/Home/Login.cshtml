@@ -3,39 +3,57 @@
 }
 @*<h2>@ViewBag.Title.</h2>*@
 
+<link href="~/Content/custombootstrapcss.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-3.3.1.js"></script>
+<script src="~/Scripts/jquery-3.3.1.intellisense.js"></script>
+<script src="~/Scripts/jquery-3.3.1.min.js"></script>
+<script src="~/Scripts/jquery.validate.js"></script>
+<script src="~/Scripts/jquery.validate.min.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.js"></script>
+<script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/Scripts/knockout-3.5.0.debug.js"></script>
+<script src="~/Scripts/knockout-3.5.0.js"></script>
 
-
+@{
+    var showLoaderInfo = ViewData["showLoaderInfo"];
+}
+@*@using System.Web.Script.Serialization;*@
+@using EmployeeWithEntityFramwork.Models
 @model EmployeeWithEntityFramwork.Models.Login
 
-    @if (ViewBag.Message == null)
+<h2> @ViewBag.Message</h2>
+
+@if (ViewBag.Message == null || showLoaderInfo == null)
+{
+
+    using (Html.BeginForm("Login", "Home", FormMethod.Post))
     {
+        <div class="row">
 
-        using (Html.BeginForm("Login", "Home", FormMethod.Post))
-        {
-            <div class="row">
+            <fieldset>
+                @Html.AntiForgeryToken()
 
-                <fieldset>
-                    @Html.AntiForgeryToken()
-
-                    <div class="editor-label">
-                        @Html.LabelFor(model => model.PersonalNumber)
-                    </div>
-                    <div class="editor-field">
-                        @Html.EditorFor(model => model.PersonalNumber)
-                        @Html.ValidationMessageFor(model => model.PersonalNumber)
-                    </div>
-                    <div style="display: -webkit-inline-box;margin-top: 10px;">
-                        <p>
-                            <input type="submit" value="Login" id="btn_login" />
-                        </p>
-                    </div>
-                </fieldset>
-            </div>
-        }
+                <div class="editor-label">
+                    @Html.LabelFor(model => model.PersonalNumber)
+                </div>
+                <div class="editor-field">
+                    @Html.EditorFor(model => model.PersonalNumber)
+                    @Html.ValidationMessageFor(model => model.PersonalNumber)
+                </div>
+                <div style="display: -webkit-inline-box;margin-top: 10px;">
+                    <p>
+                        <input type="submit" value="Login" id="btn_login" />
+                    </p>
+                </div>
+            </fieldset>
+        </div>
     }
+}
 
 
-<h3>@ViewBag.Message</h3>
+
+
+
 
 
 

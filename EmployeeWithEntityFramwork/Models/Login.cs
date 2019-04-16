@@ -8,5 +8,6 @@ namespace EmployeeWithEntityFramwork.Models
     public class Login
     {
         public string PersonalNumber { get; set; }
+        public string LoaderInfo { get; set; }
     }
 }

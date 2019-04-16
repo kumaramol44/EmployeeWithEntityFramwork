@@ -8,6 +8,7 @@ using System.Net.Mail;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
+using Microsoft.Ajax.Utilities;
 
 namespace EmployeeWithEntityFramwork.Controllers
 {
@@ -20,48 +21,64 @@ namespace EmployeeWithEntityFramwork.Controllers
 
         public ActionResult Login(Login loginModel)
         {
-            if (loginModel != null)
+            if (loginModel.PersonalNumber != null)
             {
-                if (loginModel.PersonalNumber != null)
-                {
-                    if (AuthenticateWithBankId(loginModel.PersonalNumber))
-                    {
-                        ViewBag.Message = "User is Logged In!!";
-                        return View();
-                    }
-                    else
-                    {
-                        ViewBag.Message = "Invalid Credentials!!";
-                    }
-                }
-                
+                //var str = AuthenticateWithBankId(loginModel.PersonalNumber);
+                ViewBag.Message = "Open your Mobile App to Authenticate.";
+                return PartialView("Partials/_LoadView");
             }
-            return View();
+            else
+            {
+                return View();
+            }
         }
 
-        private bool AuthenticateWithBankId(string personalNumber)
+        public ActionResult AuthenticateWithBankId(string personalNumber)
         {
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
-            try
-            {
-                var order = Authenticate(personalNumber);
+            //try
+            //{
+            var order = Authenticate(personalNumber);
+            var response = Collect(order);
 
-                // collect the result
-                var response = Collect(order);
-                if (response.progressStatus == ProgressStatusType.COMPLETE)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
+            //if (response.progressStatus == ProgressStatusType.COMPLETE)
+            //{
+            //    ViewBag.Message = "Login Successfull";
+            //    return View("Login");
+            //}
+            //else if (response.progressStatus == ProgressStatusType.USER_SIGN)
+            //{
+            //    ViewBag.Message = "Login Pending";
+            //    return View("Login");
+            //}
+
+            return View("Login");
+            // collect the result
+            //var response = Collect(order);
+            //if (response.progressStatus == ProgressStatusType.COMPLETE)
+            //{
+            //    return true;
+            //}
+            //else
+            //{
+            //    return false;
+            //}
+            //}
+            //catch (Exception ex)
+            //{
+            //    return false;
+            //}
+            //if (response.progressStatus == ProgressStatusType.COMPLETE)
+            //{
+            //    //return "User Logged in Successfully";
+            //}
+            //else if (response.progressStatus == ProgressStatusType.USER_SIGN)
+            //{
+            //    //return "Please Enter your Security Key";
+            //}
+
+            //return View("Login");
         }
 
         private static OrderResponseType Authenticate(string ssn)
@@ -107,17 +124,17 @@ namespace EmployeeWithEntityFramwork.Controllers
                 {
                     // ...collect the response
                     result = client.Collect(order.orderRef);
-
-                    Console.WriteLine(result.progressStatus);
+                    ViewBag.Message = result.progressStatus;
+                    //Console.WriteLine(result.progressStatus);
                     System.Threading.Thread.Sleep(1000);
 
                 } while (result.progressStatus != ProgressStatusType.COMPLETE);
 
+                return result;
+                //do
+                //{
 
-                do
-                {
-                    return result;
-                } while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                //} while (Console.ReadKey(true).Key != ConsoleKey.Escape);
             }
 
         }

@@ -1,0 +1,38 @@
+﻿@using EmployeeWithEntityFramwork.Models
+@model EmployeeWithEntityFramwork.Models.Login
+
+@{
+    Layout = null;
+}
+
+<link href="~/Content/custombootstrapcss.css" rel="stylesheet" />
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <div>
+        <div style="text-align: -webkit-center">
+            @ViewBag.Message
+            <div class="loader">
+
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+    setInterval(function () {
+        @if (ViewBag.Message == "Open your Mobile App to Authenticate.") {
+            var order = Html.Action("AuthenticateWithBankId", "Home", new { personalNumber= 198001018129 });
+        }
+        else
+        {
+            
+        }
+    }, 1000);
+</script>
+<div></div>
