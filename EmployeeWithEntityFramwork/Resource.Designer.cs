@@ -131,5 +131,23 @@ namespace EmployeeWithEntityFramwork {
                 return ResourceManager.GetString("Name", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Personal Number.
+        /// </summary>
+        public static string PersonalNumber {
+            get {
+                return ResourceManager.GetString("PersonalNumber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Personal Number is Required.
+        /// </summary>
+        public static string PersonalRequired {
+            get {
+                return ResourceManager.GetString("PersonalRequired", resourceCulture);
+            }
+        }
     }
 }

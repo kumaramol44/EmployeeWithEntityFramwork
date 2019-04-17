@@ -2,13 +2,16 @@
 using EmployeeWithEntityFramwork.Models;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using Microsoft.Ajax.Utilities;
+using System.Web.UI;
 
 namespace EmployeeWithEntityFramwork.Controllers
 {
@@ -23,9 +26,9 @@ namespace EmployeeWithEntityFramwork.Controllers
         {
             if (loginModel.PersonalNumber != null)
             {
-                //var str = AuthenticateWithBankId(loginModel.PersonalNumber);
-                ViewBag.Message = "Open your Mobile App to Authenticate.";
-                return PartialView("Partials/_LoadView");
+                var auth = AuthenticateWithBankId(loginModel.PersonalNumber);
+                return auth;
+
             }
             else
             {
@@ -37,51 +40,12 @@ namespace EmployeeWithEntityFramwork.Controllers
         {
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
-            //try
-            //{
             var order = Authenticate(personalNumber);
-            var response = Collect(order);
-
-            //if (response.progressStatus == ProgressStatusType.COMPLETE)
-            //{
-            //    ViewBag.Message = "Login Successfull";
-            //    return View("Login");
-            //}
-            //else if (response.progressStatus == ProgressStatusType.USER_SIGN)
-            //{
-            //    ViewBag.Message = "Login Pending";
-            //    return View("Login");
-            //}
-
-            return View("Login");
-            // collect the result
-            //var response = Collect(order);
-            //if (response.progressStatus == ProgressStatusType.COMPLETE)
-            //{
-            //    return true;
-            //}
-            //else
-            //{
-            //    return false;
-            //}
-            //}
-            //catch (Exception ex)
-            //{
-            //    return false;
-            //}
-            //if (response.progressStatus == ProgressStatusType.COMPLETE)
-            //{
-            //    //return "User Logged in Successfully";
-            //}
-            //else if (response.progressStatus == ProgressStatusType.USER_SIGN)
-            //{
-            //    //return "Please Enter your Security Key";
-            //}
-
-            //return View("Login");
+            return Collect(order);
         }
 
-        private static OrderResponseType Authenticate(string ssn)
+
+        public OrderResponseType Authenticate(string ssn)
         {
             using (var client = new RpServicePortTypeClient())
             {
@@ -105,38 +69,47 @@ namespace EmployeeWithEntityFramwork.Controllers
                     personalNumber = ssn,
                     requirementAlternatives = new[] { conditions }
                 };
-
                 // ...authenticate
                 return client.Authenticate(authenticateRequestType);
             }
         }
 
-        public CollectResponseType Collect(OrderResponseType order)
+
+        private ActionResult Collect(OrderResponseType order)
         {
             using (var client = new RpServicePortTypeClient())
             {
-                Console.WriteLine("{0}Start the BankID application and sign in", Environment.NewLine);
-
                 CollectResponseType result = null;
-
                 // Wait for the client to sign in 
-                do
+                try
                 {
-                    // ...collect the response
-                    result = client.Collect(order.orderRef);
-                    ViewBag.Message = result.progressStatus;
-                    //Console.WriteLine(result.progressStatus);
-                    System.Threading.Thread.Sleep(1000);
+                    do
+                    {
+                        // ...collect the response
+                        result = client.Collect(order.orderRef);
+                        ViewBag.Message = result.progressStatus;
+                        //Console.WriteLine(result.progressStatus);
+                        System.Threading.Thread.Sleep(1000);
 
-                } while (result.progressStatus != ProgressStatusType.COMPLETE);
+                    } while (result.progressStatus != ProgressStatusType.COMPLETE);
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.Message = ex.Message.ToString();
+                    return View();
+                }
 
-                return result;
+
+                ViewBag.Message = "UserLoggedIN";
+                return View("Login", new Login
+                {
+                    LoaderInfo = "Authenticated",
+                });
                 //do
                 //{
 
                 //} while (Console.ReadKey(true).Key != ConsoleKey.Escape);
             }
-
         }
 
         public ActionResult About()

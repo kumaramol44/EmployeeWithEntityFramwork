@@ -2,37 +2,40 @@
 @model EmployeeWithEntityFramwork.Models.Login
 
 @{
+    var loaderinformation = "test";
     Layout = null;
 }
 
 <link href="~/Content/custombootstrapcss.css" rel="stylesheet" />
 <!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title></title>
-</head>
-<body>
+@using (Html.BeginForm("Collect", "Home", FormMethod.Get))
+{
     <div>
         <div style="text-align: -webkit-center">
-            @ViewBag.Message
-            <div class="loader">
+            @if (Model != null)
+            {
+                <div>@Model.LoaderInfo</div>
+                <div>@loaderinformation</div>
+                <div class="loader">
 
-            </div>
+                </div>
+            }
+
         </div>
     </div>
-</body>
-</html>
+}
+@*@if (@Model.Response != null)
+    {
+        @Html.Action("Collect", "Home", new { order = @Model.Response })
+    }*@
+
+@*<script type="text/javascript">
+        setTimeout(function () { @Html.Action("Collect","Home",new {order=@Model.Response}) }, 1000);
+        //setTimeout(function () { document.location.reload(true); }, 1000);
+    </script>*@
+
 <script>
-    setInterval(function () {
-        @if (ViewBag.Message == "Open your Mobile App to Authenticate.") {
-            var order = Html.Action("AuthenticateWithBankId", "Home", new { personalNumber= 198001018129 });
-        }
-        else
-        {
-            
-        }
-    }, 1000);
+    $(document).ready(function () {
+        loaderinformation = "asdfasdf";
+    });
 </script>
-<div></div>

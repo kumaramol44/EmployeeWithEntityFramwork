@@ -1,7 +1,6 @@
 ﻿@{
     ViewBag.Title = "Login";
 }
-@*<h2>@ViewBag.Title.</h2>*@
 
 <link href="~/Content/custombootstrapcss.css" rel="stylesheet" />
 <script src="~/Scripts/jquery-3.3.1.js"></script>
@@ -13,22 +12,32 @@
 <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
 <script src="~/Scripts/knockout-3.5.0.debug.js"></script>
 <script src="~/Scripts/knockout-3.5.0.js"></script>
+<link href="~/Content/bootstrap-theme.css" rel="stylesheet" />
 
+<a href="~/Content/bootstrap-theme.css.map"></a>
+<link href="~/Content/bootstrap-theme.min.css" rel="stylesheet" />
+<link href="~/Content/bootstrap.css" rel="stylesheet" />
+<link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+
+
+@if (ViewBag.Message != null)
+{
+    <h1>@ViewBag.Message</h1>
+}
 @{
-    var showLoaderInfo = ViewData["showLoaderInfo"];
+
+
 }
 @*@using System.Web.Script.Serialization;*@
 @using EmployeeWithEntityFramwork.Models
 @model EmployeeWithEntityFramwork.Models.Login
 
-<h2> @ViewBag.Message</h2>
 
-@if (ViewBag.Message == null || showLoaderInfo == null)
+@if (Model == null || Model.LoaderInfo == null)
 {
-
     using (Html.BeginForm("Login", "Home", FormMethod.Post))
     {
-        <div class="row">
+        <div id="inputparams" class="row">
 
             <fieldset>
                 @Html.AntiForgeryToken()
@@ -48,7 +57,59 @@
             </fieldset>
         </div>
     }
+
 }
+
+
+
+
+<div id="firstmsg" style="display:none">
+    Open your Mobile App to Authenticate....
+</div>
+<div id="secondmsg" style="display:none">
+    Enter your security Code...
+</div>
+<div id="loader" style="display:none" class="loader">
+
+</div>
+
+
+
+@*<div id="myModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Modal Header</h4>
+                </div>
+                <div class="modal-body">
+                    @Html.Partial("Partials/_LoadView")
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>*@
+
+
+
+@section Scripts{
+    @Scripts.Render("~/bundles/jqueryval")
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#btn_login").click(function () {
+                $("#loader").toggle();
+                $("#firstmsg").show();
+                $("#inputparams").hide();
+            });
+        });
+    </script>
+}
+
+
+
+
 
 
 
