@@ -3,6 +3,7 @@ using EmployeeWithEntityFramwork.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing.Printing;
+using System.EnterpriseServices.CompensatingResourceManager;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -12,6 +13,7 @@ using System.Web.Mvc;
 using System.Web.Script.Serialization;
 using Microsoft.Ajax.Utilities;
 using System.Web.UI;
+using Newtonsoft.Json;
 
 namespace EmployeeWithEntityFramwork.Controllers
 {
@@ -24,29 +26,73 @@ namespace EmployeeWithEntityFramwork.Controllers
 
         public ActionResult Login(Login loginModel)
         {
-            if (loginModel.PersonalNumber != null)
-            {
-                var auth = AuthenticateWithBankId(loginModel.PersonalNumber);
-                return auth;
 
+            if (loginModel.TempText != null)
+            {
+                ViewBag.Message = "User Logged In";
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public ContentResult GetData(Login loginModel)
+        {
+            var returnModel = new Login();
+            if (loginModel.PersonalNumber == "198001018129")
+            {
+                returnModel.Client = new RpServicePortTypeClient();
+                try
+                {
+                    returnModel.Order = Authenticate(loginModel.PersonalNumber);
+                }
+                catch (Exception ex)
+                {
+                    returnModel.TempText = ex.Message.ToString();
+                    var templist = JsonConvert.SerializeObject(returnModel,
+                        Formatting.None,
+                        new JsonSerializerSettings()
+                        {
+                            ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                        });
+
+                    return Content(templist, "application/json");
+                }
+
+                var list = JsonConvert.SerializeObject(returnModel,
+                    Formatting.None,
+                    new JsonSerializerSettings()
+                    {
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                    });
+
+                return Content(list, "application/json");
             }
             else
             {
-                return View();
+                returnModel.TempText = "Invalid_PN";
+                var list = JsonConvert.SerializeObject(returnModel,
+                    Formatting.None,
+                    new JsonSerializerSettings()
+                    {
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                    });
+                return Content(list, "application/json");
             }
+
         }
 
-        public ActionResult AuthenticateWithBankId(string personalNumber)
+        public Login AuthenticateWithBankId(string personalNumber)
         {
             System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
 
             var order = Authenticate(personalNumber);
-            return Collect(order);
+            return null;
         }
 
 
         public OrderResponseType Authenticate(string ssn)
         {
+            System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             using (var client = new RpServicePortTypeClient())
             {
                 // RequirementType is optional
@@ -70,45 +116,59 @@ namespace EmployeeWithEntityFramwork.Controllers
                     requirementAlternatives = new[] { conditions }
                 };
                 // ...authenticate
-                return client.Authenticate(authenticateRequestType);
+                var test = client.Authenticate(authenticateRequestType);
+                return test;
             }
         }
 
-
-        private ActionResult Collect(OrderResponseType order)
+        [HttpPost]
+        public ActionResult Collect(OrderResponseType order)
         {
             using (var client = new RpServicePortTypeClient())
             {
-                CollectResponseType result = null;
-                // Wait for the client to sign in 
+                RequirementType conditions = new RequirementType
+                {
+                    condition = new[]
+                    {
+                        new ConditionType()
+                        {
+                            key = "certificatePolicies",
+                            value = new[] {"1.2.3.4.25"} // Mobile BankID
+                        }}
+                };
+                AuthenticateRequestType authenticateRequestType = new AuthenticateRequestType()
+                {
+                    personalNumber = "198001018129",
+                    requirementAlternatives = new[] { conditions }
+                };
+
+                var returnModel = new Login();
+                returnModel.Client = client;
                 try
                 {
-                    do
-                    {
-                        // ...collect the response
-                        result = client.Collect(order.orderRef);
-                        ViewBag.Message = result.progressStatus;
-                        //Console.WriteLine(result.progressStatus);
-                        System.Threading.Thread.Sleep(1000);
-
-                    } while (result.progressStatus != ProgressStatusType.COMPLETE);
+                    returnModel.Response = client.Collect(order.orderRef);
                 }
                 catch (Exception ex)
                 {
-                    ViewBag.Message = ex.Message.ToString();
-                    return View();
+                    returnModel.TempText = ex.Message.ToString();
+                    var templist = JsonConvert.SerializeObject(returnModel,
+                        Formatting.None,
+                        new JsonSerializerSettings()
+                        {
+                            ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                        });
+                    return Content(templist, "application/json");
                 }
 
+                returnModel.ResponseCode = returnModel.Response.userInfo;
+                var list = JsonConvert.SerializeObject(returnModel,
+                    Formatting.None,
+                    new JsonSerializerSettings()
+                    {
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                    });
 
-                ViewBag.Message = "UserLoggedIN";
-                return View("Login", new Login
-                {
-                    LoaderInfo = "Authenticated",
-                });
-                //do
-                //{
-
-                //} while (Console.ReadKey(true).Key != ConsoleKey.Escape);
+                return Content(list, "application/json");
             }
         }
 

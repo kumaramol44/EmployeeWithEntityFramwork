@@ -13,10 +13,12 @@ namespace EmployeeWithEntityFramwork.Models
         [Required(ErrorMessageResourceType = typeof(Resource), ErrorMessageResourceName = "PersonalRequired")]
         public string PersonalNumber { get; set; }
 
-        public string LoaderInfo { get; set; }
-        public Login()
-        {
+        public CollectResponseType Response { get; set; }
+        public UserInfoType ResponseCode { get; set; }
+        public RpServicePortTypeClient Client { get; set; }
+        public OrderResponseType Order { get; set; }
+        public List<ProgressStatusType> AllProgressStatusTypes { get; set; }
+        public string TempText { get; set; }
 
-        }
     }
 }

@@ -24,88 +24,166 @@
 {
     <h1>@ViewBag.Message</h1>
 }
-@{
+@*@{
+        var result = new CollectResponseType();
 
-
-}
+    }*@
 @*@using System.Web.Script.Serialization;*@
-@using EmployeeWithEntityFramwork.Models
-@model EmployeeWithEntityFramwork.Models.Login
+@*@using EmployeeWithEntityFramwork.BankIdService
+    @using EmployeeWithEntityFramwork.Models
+    @model EmployeeWithEntityFramwork.Models.Login*@
 
 
-@if (Model == null || Model.LoaderInfo == null)
-{
-    using (Html.BeginForm("Login", "Home", FormMethod.Post))
-    {
-        <div id="inputparams" class="row">
 
-            <fieldset>
-                @Html.AntiForgeryToken()
 
-                <div class="editor-label">
-                    @Html.LabelFor(model => model.PersonalNumber)
-                </div>
-                <div class="editor-field">
-                    @Html.EditorFor(model => model.PersonalNumber)
-                    @Html.ValidationMessageFor(model => model.PersonalNumber)
-                </div>
-                <div style="display: -webkit-inline-box;margin-top: 10px;">
-                    <p>
-                        <input type="submit" value="Login" id="btn_login" />
-                    </p>
-                </div>
-            </fieldset>
+<body>
+    <form>
+        <div style="margin-top: 100px">
+            <label>Enter Your Personal Number</label>
+            <input type="text" data-bind="value:personalNumber" required />
+            <button data-bind="click:getData">Login</button>
+            <p data-bind="text:userInfo"></p>
         </div>
-    }
+        <div id="loader" style="display:none" class="loader">
 
-}
-
-
-
-
-<div id="firstmsg" style="display:none">
-    Open your Mobile App to Authenticate....
-</div>
-<div id="secondmsg" style="display:none">
-    Enter your security Code...
-</div>
-<div id="loader" style="display:none" class="loader">
-
-</div>
-
-
-
-@*<div id="myModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">Modal Header</h4>
-                </div>
-                <div class="modal-body">
-                    @Html.Partial("Partials/_LoadView")
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </div>
-            </div>
         </div>
-    </div>*@
+    </form>
+    <script>
+        var MyViewModel = {
+            personalNumber: ko.observable(),
+            userInfo: ko.observable(),
+            progressStatusCode: ko.observable(),
+            client: ko.observable(),
+            order: ko.observable(),
+            result: ko.observable(),
+            returnView: function () {
+                $("#loader").hide();
+                var model = {
+                    PersonalNumber: MyViewModel.personalNumber(),
+                    TempText: "User Logged In"
 
+                };
+                $.ajax({
+                    url: '/Home/Login',
+                    type: 'POST',
+                    data: '{loginModel: ' + JSON.stringify(model) + '}',
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                    },
+                    error: function (err) {
+                        alert(err.status + " : " + err.statusText);
 
+                    }
+                })
+            },
+            collectInfo: function (order) {
+                var orderResponse = order;
+                $.ajax({
+                    url: '/Home/Collect',
+                    type: 'POST',
+                    data: '{order: ' + JSON.stringify(order) + '}',
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        if (data.TempText == "USER_CANCEL") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Transaction Cancelled By User");
+                        } else if (data.TempText == "EXPIRED_TRANSACTION") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Transaction Expired");
+                        }
+                        else if (data.TempText == "START_FAILED") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("The BankID app couldn’t be found on your computer or mobile device. Please install it and order a BankID from your internet bank.Install the app from install.bankid.com.");
+                        }
+                        else if (data.TempText == "CERTIFICATE_ERR") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("The BankID you are trying to use is revoked or too old. Please use another BankID or order a new one from your internet bank.");
+                        }
+                        else if (data.TempText == "INTERNAL_ERROR" || data.TempText == "RETRY") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Internal error. Please try again.");
+                        }
+                        else if (data.TempText == "ALREADY_IN_PROGRESS" || data.TempText == "CANCELLED") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Action cancelled. Please try again.");
+                        }
+                        if (data.Response != null) {
+                            if (data.Response.progressStatus == 0) {
+                                MyViewModel.userInfo("Open Your Mobile App");
+                                MyViewModel.collectInfo(order);
+                            } else if (data.Response.progressStatus == 1) {
+                                MyViewModel.userInfo("Enter Your Security Code");
+                                MyViewModel.collectInfo(order);
+                            } else if (data.Response.progressStatus == 2) {
+                                MyViewModel.userInfo("Open Your Mobile App");
+                                MyViewModel.collectInfo(order);
+                            } else if (data.Response.progressStatus == 3) {
+                                MyViewModel.userInfo("Enter Your Security Code");
+                                MyViewModel.collectInfo(order);
+                            } else if (data.Response.progressStatus == 5) {
+                                MyViewModel.userInfo("Transaction Completed");
+                                //MyViewModel.returnView();
+                                //MyViewModel.collectInfo(order);
+                                $("#loader").hide();
+                            }
+                            MyViewModel.progressStatusCode(data.Response.ProgressStatus);
+                        }
+                    },
+                    error: function (err) {
+                        alert(err.status + " : " + err.statusText);
 
-@section Scripts{
-    @Scripts.Render("~/bundles/jqueryval")
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $("#btn_login").click(function () {
+                    }
+                })
+            },
+            getData: function () {
                 $("#loader").toggle();
-                $("#firstmsg").show();
-                $("#inputparams").hide();
-            });
-        });
+                var model = {
+                    PersonalNumber: MyViewModel.personalNumber()
+                };
+                $.ajax({
+                    url: '/Home/GetData',
+                    type: 'POST',
+                    data: '{loginModel: ' + JSON.stringify(model) + '}',
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        if (data.TempText == "Invalid_PN") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Invalid Personal Number");
+                        } else if (data.Response == null) {
+                            MyViewModel.collectInfo(data.Order);
+                        }
+                        else if (data.TempText == "INTERNAL_ERROR" || data.TempText == "RETRY") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Internal error. Please try again.");
+                        }
+                        else if (data.TempText == "ALREADY_IN_PROGRESS" || data.TempText == "CANCELLED") {
+                            $("#loader").hide();
+                            MyViewModel.userInfo("Action cancelled. Please try again.");
+                        }
+                    },
+                    error: function (err) {
+                        alert(err.status + " : " + err.statusText);
+
+                    }
+                })
+            },
+
+        };
+        ko.applyBindings(MyViewModel);
     </script>
-}
+</body>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
