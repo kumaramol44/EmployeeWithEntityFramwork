@@ -19,7 +19,7 @@
 <link href="~/Content/bootstrap.css" rel="stylesheet" />
 <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
 
-
+@model EmployeeWithEntityFramwork.Models.Login
 @if (ViewBag.Message != null)
 {
     <h1>@ViewBag.Message</h1>
@@ -47,6 +47,8 @@
         <div id="loader" style="display:none" class="loader">
 
         </div>
+        @*<a id="openbankidapp" href="bankid:///?redirect=http://192.168.1.55:1211/Home/Login" target="_blank" rel="alternate" style="display:none"></a>*@
+        <a id="openbankidapp" href="bankid:///" target="_blank" rel="alternate" style="display:none"></a>
     </form>
     <script>
         var MyViewModel = {
@@ -110,6 +112,11 @@
                         if (data.Response != null) {
                             if (data.Response.progressStatus == 0) {
                                 MyViewModel.userInfo("Open Your Mobile App");
+
+                                if (data.OpenMobileApp) {
+                                    var href = $('#openbankidapp').attr('href');
+                                    window.location.href = href + "?redirect=http://192.168.1.55:1211/Home/Login?orderRef=" + data.OrderRef;
+                                }
                                 MyViewModel.collectInfo(order);
                             } else if (data.Response.progressStatus == 1) {
                                 MyViewModel.userInfo("Enter Your Security Code");
@@ -130,7 +137,9 @@
                         }
                     },
                     error: function (err) {
-                        alert(err.status + " : " + err.statusText);
+                        $("#loader").hide();
+                        MyViewModel.userInfo(err.statusText);
+                        //alert(err.status + " : " + err.statusText);
 
                     }
                 })

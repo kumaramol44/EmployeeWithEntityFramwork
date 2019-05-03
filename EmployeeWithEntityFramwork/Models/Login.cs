@@ -19,6 +19,8 @@ namespace EmployeeWithEntityFramwork.Models
         public OrderResponseType Order { get; set; }
         public List<ProgressStatusType> AllProgressStatusTypes { get; set; }
         public string TempText { get; set; }
+        public bool OpenMobileApp { get; set; }
+        public string OrderRef { get; set; }
 
     }
 }

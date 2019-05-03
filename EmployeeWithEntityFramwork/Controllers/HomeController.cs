@@ -2,6 +2,7 @@
 using EmployeeWithEntityFramwork.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing.Printing;
 using System.EnterpriseServices.CompensatingResourceManager;
 using System.Linq;
@@ -14,11 +15,13 @@ using System.Web.Script.Serialization;
 using Microsoft.Ajax.Utilities;
 using System.Web.UI;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace EmployeeWithEntityFramwork.Controllers
 {
     public class HomeController : Controller
     {
+        public bool _openMobileApp = false;
         public ActionResult Index()
         {
             return View();
@@ -26,13 +29,48 @@ namespace EmployeeWithEntityFramwork.Controllers
 
         public ActionResult Login(Login loginModel)
         {
-
-            if (loginModel.TempText != null)
+            if (loginModel.OrderRef != null)
             {
-                ViewBag.Message = "User Logged In";
+                var client = new RpServicePortTypeClient();
+                var response = new CollectResponseType();
+                try
+                {
+                    response = client.Collect(loginModel.OrderRef);
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.Message = ex.Message.ToString();
+                    return View("Login");
+                }
+
+                if (response.progressStatus == ProgressStatusType.COMPLETE)
+                {
+                    ViewBag.Message = "Transaction Completed";
+                }
             }
             return View();
         }
+
+        //public ActionResult FinalResult(Login loginModel)
+        //{
+        //    var client = new RpServicePortTypeClient();
+        //    var response = new CollectResponseType();
+        //    try
+        //    {
+        //        response = client.Collect(orderRef);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        ViewBag.Message = ex.Message.ToString();
+        //        return View("Login");
+        //    }
+
+        //    if (response.progressStatus == ProgressStatusType.COMPLETE)
+        //    {
+        //        ViewBag.Message = "Transaction Completed";
+        //    }
+        //    return View("Login");
+        //}
 
         [HttpPost]
         public ContentResult GetData(Login loginModel)
@@ -105,7 +143,7 @@ namespace EmployeeWithEntityFramwork.Controllers
                         new ConditionType()
                         {
                             key = "certificatePolicies",
-                            value = new[] {"1.2.3.4.25"} // Mobile BankID
+                            value = new[] {"1.2.3.4.25"}//Same Device Mobile BankID
                         }}
                 };
 
@@ -116,8 +154,17 @@ namespace EmployeeWithEntityFramwork.Controllers
                     requirementAlternatives = new[] { conditions }
                 };
                 // ...authenticate
-                var test = client.Authenticate(authenticateRequestType);
-                return test;
+                try
+                {
+                    var test = client.Authenticate(authenticateRequestType);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                    throw;
+                }
+
+                return client.Authenticate(authenticateRequestType);
             }
         }
 
@@ -126,23 +173,12 @@ namespace EmployeeWithEntityFramwork.Controllers
         {
             using (var client = new RpServicePortTypeClient())
             {
-                RequirementType conditions = new RequirementType
-                {
-                    condition = new[]
-                    {
-                        new ConditionType()
-                        {
-                            key = "certificatePolicies",
-                            value = new[] {"1.2.3.4.25"} // Mobile BankID
-                        }}
-                };
-                AuthenticateRequestType authenticateRequestType = new AuthenticateRequestType()
-                {
-                    personalNumber = "198001018129",
-                    requirementAlternatives = new[] { conditions }
-                };
-
                 var returnModel = new Login();
+                if (Request.Browser.IsMobileDevice)
+                {
+                    returnModel.OpenMobileApp = true;
+                    _openMobileApp = true;
+                }
                 returnModel.Client = client;
                 try
                 {
@@ -161,6 +197,7 @@ namespace EmployeeWithEntityFramwork.Controllers
                 }
 
                 returnModel.ResponseCode = returnModel.Response.userInfo;
+                returnModel.OrderRef = order.orderRef;
                 var list = JsonConvert.SerializeObject(returnModel,
                     Formatting.None,
                     new JsonSerializerSettings()
